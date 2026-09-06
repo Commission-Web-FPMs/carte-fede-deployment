@@ -1,0 +1,6 @@
+apiVersion: v2
+name: site-fede-deployment
+description: Déploiement GitOps du site fédé.
+type: application
+
+version: 0.1.0
