@@ -3,7 +3,7 @@
 image:
   repository: ghcr.io/Commission-Web-FPMs/site-fede
   pullPolicy: IfNotPresent
-  tag: latest
+  tag: c4d70eddbe56303766442155d62eca81a4fe86a0
 
 replicaCount: 1
 
