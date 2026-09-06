@@ -1,7 +1,7 @@
 # Default values for site-fede-deployment.
 
 image:
-  repository: ghcr.io/Commission-Web-FPMs/site-fede
+  repository: ghcr.io/commission-web-fpms/site-fede
   pullPolicy: IfNotPresent
   tag: c4d70eddbe56303766442155d62eca81a4fe86a0
 
