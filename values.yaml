@@ -3,7 +3,7 @@
 image:
   repository: ghcr.io/commission-web-fpms/site-fede
   pullPolicy: IfNotPresent
-  tag: 8788b742428880bd57ac1569a55a25451b968a72
+  tag: cb9098485de1210779b83fc02e5768a79a608535
 
 replicaCount: 1
 
