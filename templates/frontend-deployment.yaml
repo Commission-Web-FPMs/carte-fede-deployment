@@ -43,9 +43,19 @@ spec:
             - name: http
               containerPort: {{ .Values.frontend.containerPort }}
               protocol: TCP
+          {{- $hasFrontendBaseUrl := false }}
+          {{- range .Values.frontend.env }}
+          {{- if eq .name "FRONTEND_BASE_URL" }}
+          {{- $hasFrontendBaseUrl = true }}
+          {{- end }}
+          {{- end }}
           env:
             - name: PORT
               value: {{ .Values.frontend.containerPort | quote }}
+            {{- if and .Values.httpRoute.hostnames (not $hasFrontendBaseUrl) (not .Values.frontend.envFrom) }}
+            - name: FRONTEND_BASE_URL
+              value: {{ printf "https://%s" (first .Values.httpRoute.hostnames) | quote }}
+            {{- end }}
             {{- range .Values.frontend.env }}
             {{- if eq .name "PORT" }}
             {{- fail "Set frontend.containerPort instead of overriding frontend env PORT" }}

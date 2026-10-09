@@ -33,18 +33,21 @@ Le certificat et la redirection HTTP vers HTTPS sont gérés par l'infrastructur
 
 Le chart ne crée pas de Secret, de ConfigMap applicative ou de base PostgreSQL. Toute configuration de l'application est injectée par `env` et `envFrom`, avec prise en charge de `valueFrom`.
 
-Le backend conserve les clés racine `env` et `envFrom`. Le frontend utilise `frontend.env` et `frontend.envFrom`, réservées aux paramètres publics. Ne pas y référencer le Secret contenant les accès PostgreSQL et SMTP.
+Le backend reçoit directement les clés racine `env` et `envFrom` fournies par `helm.values`. Le Secret `postgresql-credentials` doit exister dans le namespace de l'application et contenir `DATABASE_URL`. Le Secret de type `basic-auth` dans `comweb-db` sert à PostgreSQL ; il n'est pas injecté dans les pods applicatifs.
+
+Le frontend reçoit automatiquement `FRONTEND_BASE_URL` à partir du premier domaine de `httpRoute.hostnames`, avec le schéma HTTPS. `frontend.env` et `frontend.envFrom` restent des surcharges facultatives pour les paramètres publics. Une entrée explicite `FRONTEND_BASE_URL` ou une liste `frontend.envFrom` désactive cette déduction. Ne pas y référencer le Secret contenant les accès PostgreSQL et SMTP.
 
 Exemple de valeurs d'environnement, les ressources référencées doivent déjà exister :
 
 ```yaml
 envFrom:
   - secretRef:
+      name: postgresql-credentials
+  - secretRef:
       name: carte-fede-backend-env
-frontend:
-  envFrom:
-    - configMapRef:
-        name: carte-fede-frontend-env
+httpRoute:
+  hostnames:
+    - carte-fede-main.web.magellan.fpms.ac.be
 ```
 
 | Variables backend | Usage |
@@ -57,9 +60,11 @@ frontend:
 | `MAIL_ADDRESS`, `MAIL_PASSWORD`, `MAIL_FROM_NAME`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USE_TLS`, `SMTP_USE_SSL` | Configuration SMTP. |
 | `AUTO_CREATE_DB` | Garder `0` sur une base existante ; appliquer les migrations avant le rollout. |
 
+Le Secret `carte-fede-backend-env` de cet exemple fournit notamment `SECRET_KEY`, obligatoire pour le backend.
+
 Le frontend reçoit `FRONTEND_BASE_URL` au démarrage. Ses pages, sitemap et robots.txt utilisent cette origine, sans reconstruire l'image. L'origine doit correspondre au domaine de l'HTTPRoute. Les appels API restent relatifs à `/api/`.
 
-La valeur par défaut de l'image frontend est l'origine de production. La remplacer explicitement dans les autres environnements. Le frontend doit pouvoir écrire ses fichiers de configuration et les fichiers statiques générés au démarrage ; un système de fichiers entièrement en lecture seule demande des volumes adaptés.
+Sans domaine dans `httpRoute.hostnames` ni surcharge explicite, l'image frontend conserve son origine de production. Pour un environnement HTTP, renseigner `FRONTEND_BASE_URL` dans `frontend.env` avec le schéma `http://`. Le frontend doit pouvoir écrire ses fichiers de configuration et les fichiers statiques générés au démarrage ; un système de fichiers entièrement en lecture seule demande des volumes adaptés.
 
 ## Disponibilité et accès
 

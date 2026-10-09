@@ -61,7 +61,8 @@ frontend:
   service:
     type: ClusterIP
     port: 80
-  # Public settings only, including FRONTEND_BASE_URL. Do not reuse backend secrets.
+  # FRONTEND_BASE_URL defaults to https://<first httpRoute hostname>.
+  # Optional public overrides only. Do not reuse backend secrets.
   env: []
   envFrom: []
   podAnnotations: {}
