@@ -3,7 +3,7 @@
 image:
   repository: ghcr.io/commission-web-fpms/carte-fede
   pullPolicy: IfNotPresent
-  tag: 0f5340aaf5ee2126a2015953cc64106a19fe4488
+  tag: e06aebf80a33905837f3910609f10c1fb48c3a81
 
 replicaCount: 1
 
@@ -114,3 +114,9 @@ tolerations: []
 affinity: {}
 
 envFrom: []
+
+frontend:
+  image:
+    repository: ghcr.io/commission-web-fpms/carte-fede-frontend
+    pullPolicy: IfNotPresent
+    tag: e06aebf80a33905837f3910609f10c1fb48c3a81
