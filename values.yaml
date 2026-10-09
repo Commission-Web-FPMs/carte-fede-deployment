@@ -3,7 +3,7 @@
 image:
   repository: ghcr.io/commission-web-fpms/carte-fede
   pullPolicy: IfNotPresent
-  tag: 4bcebe888a9545b4291b0df6f0907b4601554f66
+  tag: 0f5340aaf5ee2126a2015953cc64106a19fe4488
 
 replicaCount: 1
 
