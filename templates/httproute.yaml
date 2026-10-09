@@ -24,6 +24,9 @@ spec:
             type: Exact
             value: {{ $path }}
       filters:
+        {{- with $.Values.httpRoute.filters }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         - type: ExtensionRef
           extensionRef:
             group: traefik.io
@@ -42,7 +45,7 @@ spec:
     {{- end }}
     - matches:
         {{- required "Every HTTPRoute rule requires matches" .matches | toYaml | nindent 8 }}
-      {{- with .filters }}
+      {{- with concat (default (list) $.Values.httpRoute.filters) (default (list) .filters) }}
       filters:
         {{- toYaml . | nindent 8 }}
       {{- end }}
