@@ -1,6 +1,6 @@
-{{- if .Values.httpRoute.enabled -}}
-{{- $fullName := include "..fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
+{{- if .Values.httpRoute.enabled }}
+{{- $fullName := include "..fullname" . }}
+{{- $frontendName := include "..frontendFullname" . }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -13,26 +13,42 @@ metadata:
   {{- end }}
 spec:
   parentRefs:
-    {{- with .Values.httpRoute.parentRefs }}
-      {{- toYaml . | nindent 4 }}
-    {{- end }}
-  {{- with .Values.httpRoute.hostnames }}
+    {{- required "httpRoute.parentRefs is required" .Values.httpRoute.parentRefs | toYaml | nindent 4 }}
   hostnames:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- required "httpRoute.hostnames is required" .Values.httpRoute.hostnames | toYaml | nindent 4 }}
   rules:
-    {{- range .Values.httpRoute.rules }}
-    {{- with .matches }}
+    {{- if .Values.rateLimit.enabled }}
+    {{- range $name, $path := dict "registration" "/api/auth/register" "payment-qr" "/api/card-payment/qr" }}
     - matches:
-      {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .filters }}
+        - path:
+            type: Exact
+            value: {{ $path }}
       filters:
-      {{- toYaml . | nindent 8 }}
-    {{- end }}
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: {{ printf "%s-%s" ($fullName | trunc 49 | trimSuffix "-") $name }}
       backendRefs:
         - name: {{ $fullName }}
-          port: {{ $svcPort }}
+          port: {{ $.Values.service.port }}
+          weight: 1
+    {{- end }}
+    {{- end }}
+    {{- range .Values.httpRoute.rules }}
+    {{- $backend := default "backend" .backend }}
+    {{- if not (has $backend (list "backend" "frontend")) }}
+    {{- fail "httpRoute.rules[].backend must be backend or frontend" }}
+    {{- end }}
+    - matches:
+        {{- required "Every HTTPRoute rule requires matches" .matches | toYaml | nindent 8 }}
+      {{- with .filters }}
+      filters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      backendRefs:
+        - name: {{ if eq $backend "frontend" }}{{ $frontendName }}{{ else }}{{ $fullName }}{{ end }}
+          port: {{ if eq $backend "frontend" }}{{ $.Values.frontend.service.port }}{{ else }}{{ $.Values.service.port }}{{ end }}
           weight: 1
     {{- end }}
 {{- end }}

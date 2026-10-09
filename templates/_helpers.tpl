@@ -60,3 +60,21 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+
+{{/* Frontend labels must not match the legacy backend selector. */}}
+{{- define "..frontendFullname" -}}
+{{- printf "%s-frontend" (include "..fullname" . | trunc 54 | trimSuffix "-") -}}
+{{- end -}}
+
+{{- define "..frontendSelectorLabels" -}}
+app.kubernetes.io/name: {{ printf "%s-frontend" (include "..name" . | trunc 54 | trimSuffix "-") }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+{{- define "..frontendLabels" -}}
+helm.sh/chart: {{ include "..chart" . }}
+{{ include "..frontendSelectorLabels" . }}
+app.kubernetes.io/component: frontend
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
