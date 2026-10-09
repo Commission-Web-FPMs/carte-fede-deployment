@@ -1,0 +1,21 @@
+{{- if and .Values.httpRoute.enabled .Values.rateLimit.enabled }}
+{{- $fullName := include "..fullname" . }}
+{{- range $name, $settings := dict "registration" .Values.rateLimit.registration "payment-qr" .Values.rateLimit.paymentQr }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-%s" ($fullName | trunc 49 | trimSuffix "-") $name }}
+  labels:
+    {{- include "..labels" $ | nindent 4 }}
+spec:
+  rateLimit:
+    average: {{ $settings.average }}
+    period: {{ $settings.period | quote }}
+    burst: {{ $settings.burst }}
+    {{- with $.Values.rateLimit.sourceCriterion }}
+    sourceCriterion:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+{{- end }}
+{{- end }}

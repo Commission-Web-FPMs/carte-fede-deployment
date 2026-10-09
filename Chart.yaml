@@ -1,6 +1,6 @@
 apiVersion: v2
+# Preserve this name: it is part of the existing Deployment selectors.
 name: site-fede-deployment
-description: Déploiement GitOps du site fédé.
+description: Carte Fédé, frontend statique et API Flask via Gateway API.
 type: application
-
-version: 0.1.0
+version: 0.2.0

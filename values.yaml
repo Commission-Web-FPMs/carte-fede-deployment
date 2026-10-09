@@ -1,122 +1,130 @@
-# Default values for site-fede-deployment.
-
+# The root image and workload settings remain the backend configuration.
 image:
   repository: ghcr.io/commission-web-fpms/carte-fede
   pullPolicy: IfNotPresent
   tag: e06aebf80a33905837f3910609f10c1fb48c3a81
 
 replicaCount: 1
-
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+containerPort: 8000
 imagePullSecrets: []
-# This is to override the chart name.
 nameOverride: ""
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
 serviceAccount:
-  # Specifies whether a service account should be created.
   create: true
-  # Automatically mount a ServiceAccount's API credentials?
   automount: false
-  # Annotations to add to the service account.
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template.
   name: ""
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
-
 podSecurityContext: {}
-  # fsGroup: 2000
-
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   port: 8000
 
-# -- Expose the service via gateway-api HTTPRoute
-# Requires Gateway API resources and suitable controller installed within the cluster
-# (see: https://gateway-api.sigs.k8s.io/guides/)
-httpRoute:
-  # HTTPRoute enabled.
-  enabled: true
-  # HTTPRoute annotations.
-  annotations: {}
-  # Which Gateways this Route is attached to.
-  parentRefs:
-  - name: public
-    namespace: traefik
-    sectionName: http
-  # Hostnames matching HTTP header.
-  hostnames: []
-  # - chart-example.local
-  # List of rules and filters applied.
-  rules: []
-  #   filters:
-  #   - type: RequestHeaderModifier
-  #     requestHeaderModifier:
-  #       set:
-  #       - name: My-Overwrite-Header
-  #         value: this-is-the-only-value
-  #       remove:
-  #       - User-Agent
-  # - matches:
-  #   - path:
-  #       type: PathPrefix
-  #       value: /echo
-  #     headers:
-  #     - name: version
-  #       value: v2
+# Application configuration is supplied by the operator, never stored in this chart.
+# Supports ordinary env entries, valueFrom and references to existing Secrets/ConfigMaps.
+env: []
+envFrom: []
 
 resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-# livenessProbe:
-#   httpGet:
-#     path: /
-#     port: http
-# readinessProbe:
-#   httpGet:
-#     path: /
-#     port: http
-
+startupProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  failureThreshold: 30
+  periodSeconds: 2
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  periodSeconds: 5
 
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
-
-envFrom: []
 
 frontend:
   image:
     repository: ghcr.io/commission-web-fpms/carte-fede-frontend
     pullPolicy: IfNotPresent
     tag: e06aebf80a33905837f3910609f10c1fb48c3a81
+  replicaCount: 1
+  containerPort: 8080
+  service:
+    type: ClusterIP
+    port: 80
+  # Public settings only, including FRONTEND_BASE_URL. Do not reuse backend secrets.
+  env: []
+  envFrom: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources: {}
+  startupProbe:
+    httpGet:
+      path: /_health
+      port: http
+    failureThreshold: 30
+    periodSeconds: 2
+  livenessProbe:
+    httpGet:
+      path: /_health
+      port: http
+  readinessProbe:
+    httpGet:
+      path: /_health
+      port: http
+    periodSeconds: 5
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+httpRoute:
+  enabled: true
+  annotations: {}
+  parentRefs:
+    - name: public
+      namespace: traefik
+      # Omit sectionName to allow the Gateway's matching HTTP/HTTPS listeners.
+  hostnames:
+    - carte.fede.fpms.ac.be
+  # A missing backend field retains the old convention: route to the API.
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+        - path:
+            type: Exact
+            value: /verify
+      backend: backend
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backend: frontend
+
+# Requires the Traefik Middleware CRD and kubernetesCRD provider.
+# Limits apply per Traefik instance, like the old per-Nginx-instance limits.
+rateLimit:
+  enabled: true
+  # Empty sourceCriterion uses the direct client IP.
+  # Set ipStrategy only if Traefik sits behind another trusted proxy.
+  sourceCriterion: {}
+  registration:
+    average: 5
+    period: 1m
+    burst: 5
+  paymentQr:
+    average: 10
+    period: 1m
+    burst: 5
