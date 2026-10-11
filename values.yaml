@@ -2,7 +2,7 @@ image:
   repository: ghcr.io/commission-web-fpms/carte-fede-dev
   pullPolicy: IfNotPresent
   tag: f6ec7ba12c392e458233d428be967f13a71c1c4c
-replicaCount: 0
+replicaCount: 1
 containerPort: 8000
 imagePullSecrets: []
 nameOverride: ''
@@ -91,7 +91,7 @@ frontend:
     repository: ghcr.io/commission-web-fpms/carte-fede-dev-frontend
     pullPolicy: IfNotPresent
     tag: f6ec7ba12c392e458233d428be967f13a71c1c4c
-  replicaCount: 0
+  replicaCount: 1
   containerPort: 8080
   service:
     type: ClusterIP
