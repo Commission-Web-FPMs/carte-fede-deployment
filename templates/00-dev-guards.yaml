@@ -1,0 +1,6 @@
+{{- if ne .Release.Namespace "carte-fede-dev" }}{{ fail "DEV chart may only render into carte-fede-dev" }}{{- end }}
+{{- if ne .Values.fullnameOverride "carte-fede-dev" }}{{ fail "DEV fullname must remain carte-fede-dev" }}{{- end }}
+{{- if ne .Values.image.repository "ghcr.io/commission-web-fpms/carte-fede-dev" }}{{ fail "DEV backend repository required" }}{{- end }}
+{{- if ne .Values.frontend.image.repository "ghcr.io/commission-web-fpms/carte-fede-dev-frontend" }}{{ fail "DEV frontend repository required" }}{{- end }}
+{{- if or (ne (len .Values.httpRoute.hostnames) 1) (ne (first .Values.httpRoute.hostnames) "carte-dev.fede.fpms.ac.be") }}{{ fail "DEV hostname required" }}{{- end }}
+{{- if not (regexMatch "^[0-9a-f]{40}$" .Values.image.tag) }}{{ fail "Immutable SHA40 image tag required" }}{{- end }}
