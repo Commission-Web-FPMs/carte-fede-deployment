@@ -54,9 +54,13 @@ env:
   value: --access-logformat='%(m)s %(s)s %(L)s'
 - name: DEV_DATA_MODE
   value: production_copy
+- name: DEV_REGISTRATION_ENABLED
+  value: '1'
 envFrom:
 - secretRef:
     name: carte-fede-dev-credentials
+- secretRef:
+    name: carte-fede-dev-identity-api
 resources:
   requests:
     cpu: 50m
