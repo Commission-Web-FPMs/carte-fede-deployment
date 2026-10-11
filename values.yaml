@@ -54,6 +54,12 @@ env:
   value: --access-logformat='%(m)s %(s)s %(L)s'
 - name: DEV_DATA_MODE
   value: production_copy
+- name: DEV_SESSION_IDLE_SECONDS
+  value: '1800'
+- name: DEV_SESSION_ABSOLUTE_SECONDS
+  value: '28800'
+- name: OIDC_PASSWORD_CHANGE_URL
+  value: https://auth.fede.fpms.ac.be/if/flow/default-password-change/
 - name: DEV_REGISTRATION_ENABLED
   value: '1'
 envFrom:
