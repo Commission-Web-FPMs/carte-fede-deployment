@@ -38,6 +38,16 @@ spec:
           weight: 1
     {{- end }}
     {{- end }}
+    - matches:
+        - path: {type: Exact, value: /api/auth/oidc/login}
+        - path: {type: Exact, value: /api/auth/oidc/callback}
+      filters:
+        {{- toYaml $.Values.httpRoute.filters | nindent 8 }}
+        - type: ExtensionRef
+          extensionRef: {group: traefik.io, kind: Middleware, name: carte-fede-dev-oidc-rate}
+      backendRefs:
+        - name: {{ $fullName }}
+          port: {{ $.Values.service.port }}
     {{- range .Values.httpRoute.rules }}
     {{- $backend := default "backend" .backend }}
     {{- if not (has $backend (list "backend" "frontend")) }}

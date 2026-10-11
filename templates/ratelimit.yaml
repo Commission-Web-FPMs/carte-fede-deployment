@@ -19,3 +19,17 @@ spec:
     {{- end }}
 {{- end }}
 {{- end }}
+{{- if .Values.httpRoute.enabled }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: carte-fede-dev-oidc-rate
+spec:
+  rateLimit:
+    average: 10
+    period: 1m
+    burst: 5
+    sourceCriterion:
+      ipStrategy: {depth: 1}
+{{- end }}

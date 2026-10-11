@@ -1,36 +1,67 @@
-# The root image and workload settings remain the backend configuration.
 image:
-  repository: ghcr.io/commission-web-fpms/carte-fede
+  repository: ghcr.io/commission-web-fpms/carte-fede-dev
   pullPolicy: IfNotPresent
-  tag: 585a287eaa0f56b6001d879bc31a2a517cf9f944
-
+  tag: f30f06c59a8948075ea9379d9fe759fd0c3db704
 replicaCount: 1
 containerPort: 8000
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
+nameOverride: ''
+fullnameOverride: carte-fede-dev
 serviceAccount:
   create: true
   automount: false
   annotations: {}
-  name: ""
-
+  name: ''
 podAnnotations: {}
 podLabels: {}
 podSecurityContext: {}
 securityContext: {}
-
 service:
   type: ClusterIP
   port: 8000
-
-# Application configuration is supplied by the operator, never stored in this chart.
-# Supports ordinary env entries, valueFrom and references to existing Secrets/ConfigMaps.
-env: []
-envFrom: []
-
-resources: {}
+env:
+- name: APP_ENV
+  value: development
+- name: AUTH_MODE
+  value: oidc
+- name: DATABASE_NAME
+  value: carte_fede_dev
+- name: AUTO_CREATE_DB
+  value: '0'
+- name: WEB_CONCURRENCY
+  value: '1'
+- name: SESSION_COOKIE_SECURE
+  value: 'true'
+- name: REMEMBER_COOKIE_SECURE
+  value: 'true'
+- name: PROXY_FIX_X_FOR
+  value: '2'
+- name: PROXY_FIX_X_PROTO
+  value: '1'
+- name: PROXY_FIX_X_HOST
+  value: '1'
+- name: PROXY_FIX_X_PORT
+  value: '0'
+- name: PROXY_FIX_X_PREFIX
+  value: '0'
+- name: FRONTEND_BASE_URL
+  value: https://carte-dev.fede.fpms.ac.be
+- name: OIDC_ISSUER_URL
+  value: https://auth.fede.fpms.ac.be/application/o/carte-fede-dev/
+- name: OIDC_CLIENT_ID
+  value: carte-fede-dev
+- name: GUNICORN_CMD_ARGS
+  value: --access-logformat='%(m)s %(s)s %(L)s'
+envFrom:
+- secretRef:
+    name: carte-fede-dev-credentials
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
 startupProbe:
   httpGet:
     path: /api/health
@@ -46,30 +77,32 @@ readinessProbe:
     path: /api/health
     port: http
   periodSeconds: 5
-
 nodeSelector: {}
 tolerations: []
 affinity: {}
-
 frontend:
   image:
-    repository: ghcr.io/commission-web-fpms/carte-fede-frontend
+    repository: ghcr.io/commission-web-fpms/carte-fede-dev-frontend
     pullPolicy: IfNotPresent
-    tag: 585a287eaa0f56b6001d879bc31a2a517cf9f944
+    tag: f30f06c59a8948075ea9379d9fe759fd0c3db704
   replicaCount: 1
   containerPort: 8080
   service:
     type: ClusterIP
     port: 80
-  # FRONTEND_BASE_URL defaults to https://<first httpRoute hostname>.
-  # Optional public overrides only. Do not reuse backend secrets.
   env: []
   envFrom: []
   podAnnotations: {}
   podLabels: {}
   podSecurityContext: {}
   securityContext: {}
-  resources: {}
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
   startupProbe:
     httpGet:
       path: /_health
@@ -88,39 +121,39 @@ frontend:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-
 httpRoute:
-  enabled: true
+  enabled: false
   annotations: {}
   parentRefs:
-    - name: public
-      namespace: traefik
-      # Omit sectionName to allow the Gateway's matching HTTP/HTTPS listeners.
+  - name: public
+    namespace: traefik
   hostnames:
-    - carte.fede.fpms.ac.be
-  # A missing backend field retains the old convention: route to the API.
+  - carte-dev.fede.fpms.ac.be
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api
-        - path:
-            type: Exact
-            value: /verify
-      backend: backend
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backend: frontend
-
-# Requires the Traefik Middleware CRD and kubernetesCRD provider.
-# Limits apply per Traefik instance, like the old per-Nginx-instance limits.
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    - path:
+        type: Exact
+        value: /verify
+    backend: backend
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backend: frontend
+  filters:
+  - type: ExtensionRef
+    extensionRef:
+      group: traefik.io
+      kind: Middleware
+      name: carte-fede-npm-only
 rateLimit:
   enabled: true
-  # Empty sourceCriterion uses the direct client IP.
-  # Set ipStrategy only if Traefik sits behind another trusted proxy.
-  sourceCriterion: {}
+  sourceCriterion:
+    ipStrategy:
+      depth: 1
   registration:
     average: 5
     period: 1m
@@ -129,3 +162,5 @@ rateLimit:
     average: 10
     period: 1m
     burst: 5
+devInitialization:
+  enabled: true

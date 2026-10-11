@@ -1,0 +1,29 @@
+{{- if .Values.devInitialization.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "..fullname" . }}-initialize
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 240
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: initialize
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command: [python, scripts/init_dev_data.py]
+          env:
+            {{- range .Values.env }}
+            - {{ toYaml . | nindent 14 | trim }}
+            {{- end }}
+          envFrom:
+            {{- toYaml .Values.envFrom | nindent 12 }}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+{{- end }}
