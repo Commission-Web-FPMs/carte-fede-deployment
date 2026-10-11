@@ -2,7 +2,7 @@ image:
   repository: ghcr.io/commission-web-fpms/carte-fede-dev
   pullPolicy: IfNotPresent
   tag: f976611b79bf5772177627dd5903f4784a37dee4
-replicaCount: 1
+replicaCount: 0
 containerPort: 8000
 imagePullSecrets: []
 nameOverride: ''
@@ -52,6 +52,8 @@ env:
   value: carte-fede-dev
 - name: GUNICORN_CMD_ARGS
   value: --access-logformat='%(m)s %(s)s %(L)s'
+- name: DEV_DATA_MODE
+  value: production_copy
 envFrom:
 - secretRef:
     name: carte-fede-dev-credentials
@@ -85,7 +87,7 @@ frontend:
     repository: ghcr.io/commission-web-fpms/carte-fede-dev-frontend
     pullPolicy: IfNotPresent
     tag: f976611b79bf5772177627dd5903f4784a37dee4
-  replicaCount: 1
+  replicaCount: 0
   containerPort: 8080
   service:
     type: ClusterIP
@@ -163,4 +165,4 @@ rateLimit:
     period: 1m
     burst: 5
 devInitialization:
-  enabled: true
+  enabled: false
