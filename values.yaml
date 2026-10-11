@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/commission-web-fpms/carte-fede-dev
   pullPolicy: IfNotPresent
-  tag: 28f942e91c738ee7ec55399021e1979e75c51c63
+  tag: fb2b2859e2466dd5c5223c4f2827e89a3be20423
 replicaCount: 1
 containerPort: 8000
 imagePullSecrets: []
@@ -90,7 +90,7 @@ frontend:
   image:
     repository: ghcr.io/commission-web-fpms/carte-fede-dev-frontend
     pullPolicy: IfNotPresent
-    tag: 28f942e91c738ee7ec55399021e1979e75c51c63
+    tag: fb2b2859e2466dd5c5223c4f2827e89a3be20423
   replicaCount: 1
   containerPort: 8080
   service:
