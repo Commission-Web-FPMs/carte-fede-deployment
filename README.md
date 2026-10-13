@@ -1,3 +1,12 @@
+# Inscription DEV automatique
+
+`DEV_EMAIL_REGISTRATION_ENABLED=1` active uniquement en DEV la création MEMBER
+après preuve e-mail et mot de passe natifs Authentik. Les cartes nécessitent
+toujours une décision ADMIN. Les flows et le SMTP commun dédié doivent être
+réconciliés avant ce flag. Le backend n’envoie aucun e-mail local ; Authentik
+possède le mot de passe et le SMTP. Désactiver ce flag ferme le nouveau hook
+sans supprimer les profils, identités ou journaux de reprise.
+
 # Déploiement Carte Fédé
 
 Ce chart déploie l'API Flask et le frontend Astro statique dans deux Deployments, avec deux Services ClusterIP. PostgreSQL et le Gateway sont fournis séparément.

@@ -62,6 +62,8 @@ env:
   value: https://auth.fede.fpms.ac.be/if/flow/default-password-change/
 - name: DEV_REGISTRATION_ENABLED
   value: '1'
+- name: DEV_EMAIL_REGISTRATION_ENABLED
+  value: '1'
 envFrom:
 - secretRef:
     name: carte-fede-dev-credentials
